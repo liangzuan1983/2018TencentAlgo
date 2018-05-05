@@ -35,7 +35,8 @@ def get_user_feature(filepath):
     return user_feature
 
 # get data
-def get_data(filepath, filename):
+def get_data(filename='data.csv'):
+    filepath='raw_data/'
     if os.path.exists(filepath+filename):
         return pd.read_csv(filepath+filename)
     else:
@@ -44,11 +45,11 @@ def get_data(filepath, filename):
         predict=pd.read_csv(filepath+'test1.csv')
         train.loc[train['label']==-1,'label']=0
         predict['label']=-1
-        user_feature=get_user_feature()
+        user_feature=get_user_feature(filepath)
         data=pd.concat([train,predict])
         data=pd.merge(data,ad_feature,on='aid',how='left')
         data=pd.merge(data,user_feature,on='uid',how='left')
-        data=data.fillna('-1')
+        data=data.fillna('0')
         del user_feature
         data.to_csv(filepath+'data.csv')
         return data
@@ -62,8 +63,8 @@ def load_feat_list(inputpath='data/'):
         one_hot_feature=list(allfeat[0].values())
         vector_feature=list(allfeat[1].values())
     else:
-        one_hot_feature=['LBS','age','carrier','consumptionAbility','education','gender','house','os','ct','marriageStatus','advertiserId','campaignId', 'creativeId','adCategoryId', 'productId', 'productType']
-        vector_feature=['appIdAction','appIdInstall','interest1','interest2','interest3','interest4','interest5','kw1','kw2','kw3','topic1','topic2','topic3']
+        one_hot_feature=['LBS','age','carrier','consumptionAbility','education','gender','house','advertiserId','campaignId', 'creativeId','adCategoryId', 'productId', 'productType']
+        vector_feature=['appIdAction','appIdInstall','interest1','interest2','interest3','interest4','interest5','kw1','kw2','kw3','topic1','topic2','topic3','os','ct','marriageStatus']
         save_feat_list(one_hot_feature,vector_feature,inputpath)
 
     return one_hot_feature,vector_feature
@@ -82,6 +83,6 @@ def save_feat_list(one_hot_feature, vector_feature, outputpath='data/'):
 
 ''' Following are some funtions for feature calculation '''
 def calnum(x):
-	if len(x)==1 and x[0]==-1:
+	if len(x)==1 and x[0]==0:
 		return 0
 	return len(x)

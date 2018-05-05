@@ -8,11 +8,8 @@ import os
 import json
 import FeatFuns
 
-inputpath='raw_data/'
-# outputpath='data/'
-outputpath='data_s/'
 
-def preprocess():
+def preprocess(inputfilename='data.csv',outputpath='data/'):
 
     # load feature list
     one_hot_feature,vector_feature=FeatFuns.load_feat_list(outputpath)
@@ -20,7 +17,7 @@ def preprocess():
 
     # read in data
     print('Read data....')
-    data=FeatFuns.get_data(inputpath,'data_s.csv')
+    data=FeatFuns.get_data(inputfilename)
     print(data.shape[0])
     print('Read data done!')
 

@@ -7,11 +7,11 @@ inputpath='raw_data/'
 outputpath='raw_data/'
 
 # load feature list
-one_hot_feature,vector_feature=FeatFuns.load_feat_list()
+# one_hot_feature,vector_feature=FeatFuns.load_feat_list()
 
 # read in data
 print('Read data....')
-data=pd.read_csv(inputpath+'data.csv')
+data=FeatFuns.get_data()
 print('Read data done!')
 
 
@@ -65,19 +65,30 @@ print('Read data done!')
 # one_hot_feature.remove('prodTypePercent')
 # print('Remoing prodTypePercent done')
 
+# one_hot_feature.remove('os')
+# one_hot_feature.remove('ct')
+# one_hot_feature.remove('marriageStatus')
+# vector_feature.append('os')
+# vector_feature.append('ct')
+# vector_feature.append('marriageStatus')
+
+for col_name in data.columns:
+	if col_name=='label':
+		continue
+	data[col_name]=data[col_name].replace('-1','0')
 
 
 '''save'''
 print('save data...')
 # save feature list
-FeatFuns.save_feat_list(one_hot_feature,vector_feature)
-FeatFuns.save_feat_list(one_hot_feature,vector_feature,'data_s/')
+# FeatFuns.save_feat_list(one_hot_feature,vector_feature)
+# FeatFuns.save_feat_list(one_hot_feature,vector_feature,'data_s/')
 # save data
-# data.to_csv(outputpath+'data.csv', index=False)
+data.to_csv(outputpath+'data.csv', index=False)
 print('save data done')
 
 
-print('slice 300000 samples...')
-data_s=data.sample(n=300000)
-data_s.to_csv('data_s/data_s.csv')
-print('slice 300000 samples done')
+print('slice 0.01 samples...')
+data_s=data.sample(frac=0.01)
+data_s.to_csv(outputpath+'data_s.csv')
+print('slice 0.01 samples done')

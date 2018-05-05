@@ -11,29 +11,34 @@ one_hot_feature,vector_feature=FeatFuns.load_feat_list()
 
 # read in data
 print('Read data....')
-data=pd.read_csv(inputpath+'data.csv')
+data=FeatFuns.get_data()
 print('Read data done!')
 
 
 '''Add features'''
-# print('Adding aid_age....')
-# data['aid_age']= data['aid'] * data['age']
-# one_hot_feature.append('aid_age')
+print('Adding aerIdMultiCamId....')
+data['aerIdMultiCamId']= data['advertiserId'] * data['campaignId']
+one_hot_feature.append('aerIdMultiCamId')
 
 
-# print('Adding adCate_age....')
-# data['adCate_age']= data['adCategoryId'] * data['age']
-# one_hot_feature.append('adCate_age')
+print('Adding aid_age....')
+data['aid_age']= data['aid'] * data['age']
+one_hot_feature.append('aid_age')
 
 
-# print('Adding aid_edu....')
-# data['aid_edu']= data['aid'] * data['education']
-# one_hot_feature.append('aid_edu')
+print('Adding adCate_age....')
+data['adCate_age']= data['adCategoryId'] * data['age']
+one_hot_feature.append('adCate_age')
 
 
-# print('Adding adCate_edu....')
-# data['adCate_edu']= data['adCategoryId'] * data['education']
-# one_hot_feature.append('adCate_edu')
+print('Adding aid_edu....')
+data['aid_edu']= data['aid'] * data['education']
+one_hot_feature.append('aid_edu')
+
+
+print('Adding adCate_edu....')
+data['adCate_edu']= data['adCategoryId'] * data['education']
+one_hot_feature.append('adCate_edu')
 
 
 print('Adding aid_gender....')
@@ -66,7 +71,7 @@ data.to_csv(outputpath+'data.csv', index=False)
 print('save data done')
 
 
-print('slice 300000 samples...')
-data_s=data.sample(n=300000)
+print('slice 0.01 samples...')
+data_s=data.sample(frac=0.01)
 data_s.to_csv(outputpath+'data_s.csv')
-print('slice 300000 samples done')
+print('slice 0.01 samples done')
