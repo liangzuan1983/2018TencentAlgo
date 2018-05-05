@@ -59,7 +59,7 @@ def preprocess(inputfilename='data.csv',outputpath='data/'):
 
     print('Total vector feature: %d' %len(vector_feature))
     cnt=0
-    cv=CountVectorizer()
+    cv=CountVectorizer(token_pattern=r'-?\d+')
     for feature in vector_feature:
         cv.fit(data[feature])
 
