@@ -91,14 +91,14 @@ def split_dataset(data_x, data_y, train_size = 0.7):
     data_x,data_y = shuffle(data_x,data_y,random_state = 2018)
 
     # Split
-    data_x = data_x.tocoo()
-    rown_data = data_x.shape[0]
-    rown_train = int(train_size * rown_data)
-    n_train = len(data_x.row[data_x.row < rown_train])
+    data_x = data_x.tocoo()     # 变成coo型的稀疏矩阵
+    rown_data = data_x.shape[0]   # 稀疏矩阵的行数
+    rown_train = int(train_size * rown_data)   # 作为训练集的行数
+    n_train = len(data_x.row[data_x.row < rown_train])   # row/col 中属于训练集中的元素个数
 
-    ind=np.arange(len(data_x.data))
-    ind_train=ind[:n_train]
-    ind_evals=ind[n_train:]
+    ind=np.arange(len(data_x.data))     # 稀疏矩阵非零值个数
+    ind_train=ind[:n_train]            # 前面的是训练集的
+    ind_evals=ind[n_train:]           # 后面的是验证集的
 
     train_x = sparse.coo_matrix(
         (data_x.data[ind_train],(data_x.row[ind_train], data_x.col[ind_train])),
