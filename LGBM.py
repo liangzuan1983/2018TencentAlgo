@@ -19,12 +19,8 @@ parameter=dict(boosting_type='gbdt', num_leaves=31, reg_alpha=0.0, reg_lambda=1,
 
 
 def LGBTrain(parameter,train_x,train_y,evals_x,evals_y):
-	clf=lgb.LGBMClassifier(
-    boosting_type=parameter['boosting_type'], num_leaves=parameter['num_leaves'], reg_alpha=parameter['reg_alpha'], reg_lambda=parameter['reg_lambda'],
-    max_depth=parameter['max_depth'], n_estimators=parameter['n_estimators'], objective=parameter['objective'],
-    subsample=parameter['subsample'], colsample_bytree=parameter['colsample_bytree'], subsample_freq=parameter['subsample_freq'],
-    learning_rate=parameter['learning_rate'], min_child_weight=parameter['min_child_weight'], random_state=parameter['random_state'], n_jobs=parameter['n_jobs']
-    )
+	clf=lgb.LGBMClassifier()
+	clf.set_params(**parameter)
 	clf.fit(train_x, train_y, eval_set=[(evals_x, evals_y)], eval_metric='auc',early_stopping_rounds=1000)
 	return clf
 
@@ -36,7 +32,7 @@ def main():
 	'''
 	raw_data_name='data.csv'
 	inputpath='data/'
-	outputpath='res/' + datetime.now().strftime("%Y%m%d_%H%M%S")+'/'
+	outputpath='res/' + 'LGBM_' + datetime.now().strftime("%Y%m%d_%H%M%S")+'/'
 	os.mkdir(outputpath)
 
 	''' PreProcess '''
@@ -44,13 +40,21 @@ def main():
 
 	''' Load dataset '''
 	print('Load data....')
-	train_x=sparse.load_npz(inputpath+'train_x.npz')
-	evals_x=sparse.load_npz(inputpath+'evals_x.npz')
+	data_x=sparse.load_npz(inputpath+'train_x.npz')
+	# evals_x=sparse.load_npz(inputpath+'evals_x.npz')
 	res=pd.read_csv(inputpath+'res.csv')
-	train_y=pd.read_csv(inputpath+'train_y.csv', header=None)
-	evals_y=pd.read_csv(inputpath+'evals_y.csv', header=None)
+	data_y=pd.read_csv(inputpath+'train_y.csv', header=None)
+	# evals_y=pd.read_csv(inputpath+'evals_y.csv', header=None)
 	test_x=sparse.load_npz(inputpath+'test_x.npz')
 	print('Load data done!')
+
+	''' Split dataset '''
+	print('slice into train and evals....')
+	train_x,train_y,evals_x,evals_y=FeatFuns.split_dataset(data_x,data_y)
+	del data_x,data_y
+	print('slice into train and evals done')
+	print('train dataset, samples:%d' %len(train_y))
+	print('evals dataset, samples:%d' %len(evals_y))
 
 	''' Begin Training '''
 	print("LGB test")
@@ -62,8 +66,8 @@ def main():
 	print('save result...')
 	res['score'] = clf.predict_proba(test_x)[:,1]
 	res['score'] = res['score'].apply(lambda x: float('%.6f' % x))
-	res.to_csv(outputpath+'submission.csv', index=False)
-	os.system('zip -pj '+outputpath+'submission.zip '+outputpath+'submission.csv')
+	res.to_csv(outputpath+'submission_LGBM.csv', index=False)
+	# os.system('zip -pj '+outputpath+'submission.zip '+outputpath+'submission.csv')
 
 	print('save parameter...')
 	with open(outputpath+'parameter.json','w') as outfile:
