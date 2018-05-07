@@ -11,14 +11,6 @@ import json
 import preprocess
 import FeatFuns
 
-''' Usage: 
-1. using all data: data.csv,  data/,  res/
-2. using sample data (1%): data_s.csv,  data_s/,  res/
-'''
-raw_data_name='data.csv'
-inputpath='data/'
-outputpath='res/'
-
 # Here to set parameter
 parameter=dict(boosting_type='gbdt', num_leaves=31, reg_alpha=0.0, reg_lambda=1,max_depth=-1, n_estimators=10000, 
 		objective='binary',subsample=0.7, colsample_bytree=0.7, subsample_freq=1,learning_rate=0.05, min_child_weight=50, 
@@ -38,6 +30,15 @@ def LGBTrain(parameter,train_x,train_y,evals_x,evals_y):
 
 
 def main():
+	''' Usage: 
+	1. using all data: data.csv,  data/,  res/
+	2. using sample data (1%): data_s.csv,  data_s/,  res/
+	'''
+	raw_data_name='data.csv'
+	inputpath='data/'
+	outputpath='res/' + datetime.now().strftime("%Y%m%d_%H%M%S")+'/'
+	os.mkdir(outputpath)
+
 	''' PreProcess '''
 	preprocess.preprocess(inputfilename=raw_data_name,outputpath=inputpath)
 
@@ -55,10 +56,6 @@ def main():
 	print("LGB test")
 	clf=LGBTrain(parameter,train_x,train_y,evals_x,evals_y)
 
-	# create output path
-	outputpath = outputpath + datetime.now().strftime("%Y%m%d_%H%M%S")+'/'
-	os.mkdir(outputpath)
-
 	print('save model...')
 	clf.booster_.save_model(outputpath+'model.txt')
 
@@ -66,7 +63,7 @@ def main():
 	res['score'] = clf.predict_proba(test_x)[:,1]
 	res['score'] = res['score'].apply(lambda x: float('%.6f' % x))
 	res.to_csv(outputpath+'submission.csv', index=False)
-	# os.system('zip '+outputpath+'submission.zip '+outputpath+'submission.csv')
+	os.system('zip -pj '+outputpath+'submission.zip '+outputpath+'submission.csv')
 
 	print('save parameter...')
 	with open(outputpath+'parameter.json','w') as outfile:
@@ -75,9 +72,7 @@ def main():
 
 	print('save feature list...')
 	one_hot_feature,vector_feature=FeatFuns.load_feat_list(inputpath)
-	save_feat_list(one_hot_feature, vector_feature, outputpath)
-
-
+	FeatFuns.save_feat_list(one_hot_feature, vector_feature, outputpath)
 
 if __name__ == "__main__":
 	main()

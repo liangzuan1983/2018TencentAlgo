@@ -21,6 +21,15 @@ def preprocess(inputfilename='data.csv',outputpath='data/'):
     print(data.shape[0])
     print('Read data done!')
 
+    print('Drop some columns...')
+    data = data.drop(['appIdAction', 'appIdInstall', 'interest3', 'interest4', 'kw3', 'topic3'], axis=1)
+    vector_feature.remove('appIdAction')
+    vector_feature.remove('appIdInstall')
+    vector_feature.remove('interest3')
+    vector_feature.remove('interest4')
+    vector_feature.remove('kw3')
+    vector_feature.remove('topic3')
+    print('Drop some columns done!')
 
     ''' transform the features '''
     print('one-hot....')
