@@ -36,9 +36,9 @@ parameter=dict(boosting_type='gbdt', num_leaves=31, reg_alpha=0.0, reg_lambda=1,
 
 
 
-def LGBTrain(parameter,train_x,train_y,evals_x,evals_y):
+def LGBTrain(parameter,train_x,train_y,evals_x,evals_y,callbacks=[None]):
 	clf = lgb.LGBMClassifier().set_params(**parameter)
-	clf.fit(train_x, train_y, eval_set=[(evals_x, evals_y)], eval_metric='auc',early_stopping_rounds=1000)
+	clf.fit(train_x, train_y, eval_set=[(evals_x, evals_y)], eval_metric='auc',early_stopping_rounds=1000,callbacks=callbacks)
 	return clf
 
 
@@ -81,7 +81,10 @@ def main():
 
 	''' Begin Training '''
 	print("LGB test")
-	clf=LGBTrain(parameter,train_x,train_y,evals_x,evals_y)
+	if datasetflag == 'all':
+		clf=LGBTrain(parameter,train_x,train_y,evals_x,evals_y,callbacks=[FeatFuns.save_model()])
+	else:
+		clf=LGBTrain(parameter,train_x,train_y,evals_x,evals_y)
 
 	print('save model...')
 	clf.booster_.save_model(outputpath+'model.txt')

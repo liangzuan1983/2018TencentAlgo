@@ -116,6 +116,18 @@ def split_dataset(data_x, data_y, train_size = 0.7):
     return train_x,train_y,evals_x,evals_y 
 
 
+''' save model per 1000 iter '''
+def save_model(per_iter = 1000):
+    def callback(env):
+        iter = env.iteration - env.begin_iteration
+        if iter % per_iter == 0 and not iter == 0:
+            print('Save model per {0} iter...'.format(per_iter))
+            env.model.save_model('tmp/model_{0}.txt'.format(iter))
+    callback.before_iteration = True
+    callback.order = 0
+    return callback
+
+
 ''' Following are some funtions for feature calculation '''
 def calnum(x):
 	if len(x)==1 and x[0]==0:
