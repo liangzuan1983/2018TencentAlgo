@@ -48,24 +48,6 @@ def preprocess(inputfilename='data.csv',outputpath='data/'):
     test=test.drop('label',axis=1)
     res=test[['aid','uid']]
 
-    # print('slice into train and evals....')
-    # train_per=0.7
-    # size=len(train)
-    # end=int(size*train_per)
-    # r=np.random.permutation(size)   # shuffle
-    # train=train[r,:]
-    # evals=train[end:size]
-    # train=train[0:end]
-
-    # train_y = train_label[:end]
-    # assert len(train_y)==len(train)
-    # evals_y = train_label[end:size]
-    # assert len(evals_y)==len(evals)
-    # del train_label
-    # print('slice into train and evals done!')
-    # print('%f train dataset, samples:%d' %(train_per,len(train_y)))
-    # print('%f evals dataset, samples:%d' %((1-train_per),len(evals_y)))
-
     # 定义一个field_list
     # 含义如下
     # list每一个下标对应同样下标的列 （均从1开始）
@@ -92,20 +74,14 @@ def preprocess(inputfilename='data.csv',outputpath='data/'):
         cv.fit(data[feature])
 
         train_a = cv.transform(train[feature])
-        # evals_a = cv.transform(evals[feature])
         test_a = cv.transform(test[feature])
-
 
         tmp_features_num = train_a.shape[1]  # 所占的列数
         tmp_field_list = [current_field for i in range(tmp_features_num)]
         field_list.extend(tmp_field_list)
         current_field += 1
 
-
         train_x = sparse.hstack((train_x, train_a))
-        # assert len(train_y)==train_x.shape[0]
-        # evals_x = sparse.hstack((evals_x, evals_a))
-        # assert len(evals_y)==evals_x.shape[0]
         test_x = sparse.hstack((test_x, test_a))
 
         cnt+=1
@@ -119,7 +95,6 @@ def preprocess(inputfilename='data.csv',outputpath='data/'):
         enc.fit(data[feature].values.reshape(-1, 1))
 
         train_a=enc.transform(train[feature].values.reshape(-1, 1))
-        # evals_a=enc.transform(evals[feature].values.reshape(-1, 1))
         test_a = enc.transform(test[feature].values.reshape(-1, 1))
 
         tmp_features_num = train_a.shape[1]  # 所占的列数
@@ -128,9 +103,6 @@ def preprocess(inputfilename='data.csv',outputpath='data/'):
         current_field += 1
 
         train_x = sparse.hstack((train_x, train_a))
-        # assert len(train_y)==train_x.shape[0]
-        # evals_x = sparse.hstack((evals_x, evals_a))
-        # assert len(evals_y)==evals_x.shape[0]
         test_x = sparse.hstack((test_x, test_a))
 
         cnt+=1
@@ -144,11 +116,9 @@ def preprocess(inputfilename='data.csv',outputpath='data/'):
     # save
     print('save data...')
     sparse.save_npz(outputpath+'train_x.npz',train_x)
-    # sparse.save_npz(outputpath+'evals_x.npz',evals_x)
     sparse.save_npz(outputpath+'test_x.npz',test_x)
     res.to_csv(outputpath+'res.csv', index=False)
     train_y.to_csv(outputpath+'train_y.csv', index=False)
-    # evals_y.to_csv(outputpath+'evals_y.csv', index=False)
 
     with open(outputpath+'field_list.pk', 'wb+') as f:        # 卧槽！！md 要wb+  读取要rb   我可去你个大西瓜
         pickle.dump(field_list, f)
@@ -173,33 +143,31 @@ def FFM_preprocess(inputpath='data/'):
     data_y = np.array(data_y[0])    #  把data_y 转化成numpy的array 因为只有一列数据 用DataFrame很冗余
 
     test_x = sparse.load_npz(inputpath + 'test_x.npz')
-    res = pd.read_csv(inputpath + 'res.csv')
+    #res = pd.read_csv(inputpath + 'res.csv')
 
     with open(inputpath+'field_list.pk','rb') as f:
         field_list = pickle.load(f)
     print('Load data done!')
     # print field_list
-
-
-    # with open('D:/a.txt','w') as f:
-    #
-    #     for i in range(len(data_x.row)):
-    #         f.write(str(data_x.row[i])+' ')
-    #     f.write(os.linesep)
-    #     f.write('===============================')
-    #     for i in range(len(data_x.col)):
-    #         f.write(str(data_x.col[i]) + ' ')
+    
 
     ''' Split dataset '''
     print('slice into train and evals....')
-    train_x, train_y, evals_x, evals_y = FeatFuns.split_dataset(data_x,data_y, train_size=0.7)
+    train_x, evals_x, train_y, evals_y = train_test_split(data_x,data_y,test_size=0.01)
     del data_x, data_y
     print('slice into train and evals done')
     print('train dataset, samples:%d' % len(train_y))
     print('evals dataset, samples:%d' % len(evals_y))
 
-    ''' 写 第一个txt====》 训练集的txt '''
 
+    '''转换稀疏矩阵类型 使得row col 有序排列'''
+    train_x = train_x.tocoo()
+    evals_x = evals_x.tocoo()
+    test_x = test_x.tocsr()
+    test_x = test_x.tocoo()
+
+    ''' 写 第一个txt====》 训练集的txt '''
+    print('start write train.txt')
     with open(inputpath+'train.txt', 'w') as f:
         count = 0  # 用于遍历train_x 中的row
         row_size = train_x.row.shape[0]
@@ -208,21 +176,25 @@ def FFM_preprocess(inputpath='data/'):
             # 先写label
             f.write(str(train_y[row]))
 
-            # 接着写后面的  field:feature:value 这里我们的value全是1
+            # 接着写后面的  field:feature:value 这里我们的value全是1 除了第一个creativesize
 
             while count < row_size and train_x.row[count] <= row :  # 如果后面还有 而且 依旧是当前行的
                 f.write('\t')
                 # 写field
                 f.write(str(field_list[train_x.col[count] + 1 ] ) + ':')   #我就是喜欢嵌套一堆[]和() 咬我啊   +1是失误
-                # 写feature 和value  其中value就是1
-                f.write(str(train_x.col[count] + 1) + ':' + '1')         # 为什么要+1 呢 因为 假设col是5 那么他就是第六列 写进去的应该是6
+                # 写feature 和value  其中value就是1 除了第一个creativesize
+                if train_x.col[count] == 0:
+                    f.write(str(train_x.col[count] + 1) + ':' + str(train_x.data[count]))    # 为什么要+1 呢 因为 假设col是5 那么他就是第六列 写进去的应该是6
+                else:
+                    f.write(str(train_x.col[count] + 1) + ':' + '1')
 
                 count +=1
 
             f.write(os.linesep)
+    print('write train.txt  done')
 
     ''' 写 第二个txt====》 测试的txt '''
-
+    print('start write evals.txt')
     with open(inputpath+'evals.txt', 'w') as f:
         count = 0
         row_size = evals_x.row.shape[0]
@@ -231,21 +203,25 @@ def FFM_preprocess(inputpath='data/'):
             # 先写label
             f.write(str(evals_y[row]))
 
-            # 接着写后面的  field:feature:value 这里我们的value全是1
+            # 接着写后面的  field:feature:value 这里我们的value全是1 除了第一个creativesize
 
             while count < row_size and evals_x.row[count] <= row:  # 如果后面还有 而且 依旧是当前行的
                 f.write('\t')
                 # 写field
                 f.write(str(field_list[evals_x.col[count] + 1]) + ':')  # 我就是喜欢嵌套一堆[]和() 咬我啊   +1是失误
-                # 写feature 和value  其中value就是1
-                f.write(str(evals_x.col[count] + 1) + ':' + '1')  # 为什么要+1 呢 因为 假设col是5 那么他就是第六列 写进去的应该是6
+                # 写feature 和value  其中value就是1 除了第一个creativesize
+                if evals_x.col[count] == 0:
+                    f.write(str(evals_x.col[count] + 1) + ':' + str(evals_x.data[count]))    # 为什么要+1 呢 因为 假设col是5 那么他就是第六列 写进去的应该是6
+                else:
+                    f.write(str(evals_x.col[count] + 1) + ':' + '1')
 
                 count += 1
 
             f.write(os.linesep)
-
+    print('write evals.txt done')
     ''' 写 第三个txt====》 测试集的txt '''
 
+    print('start write test.txt')
     with open(inputpath+'test.txt', "w") as f:
         count = 0  # 用于遍历train_x 中的row
         row_size = test_x.row.shape[0]
@@ -254,26 +230,23 @@ def FFM_preprocess(inputpath='data/'):
             # 先写label  这个随便写  占label位置即可
             f.write('0')
 
-            # 接着写后面的  field:feature:value 这里我们的value全是1
+            # 接着写后面的  field:feature:value 这里我们的value全是1 除了第一个creativesize
 
             while count < row_size and test_x.row[count] <= row:  # 如果后面还有 而且 依旧是当前行的
                 f.write('\t')
                 # 写field
                 f.write(str(field_list[test_x.col[count] + 1]) + ':')  # 我就是喜欢嵌套一堆[]和() 咬我啊   +1是失误
-                # 写feature 和value  其中value就是1
-                f.write(str(test_x.col[count] + 1) + ':' + '1')  # 为什么要+1 呢 因为 假设col是5 那么他就是第六列 写进去的应该是6
-
+                # 写feature 和value  其中value就是1 除了第一个creativesize
+                if test_x.col[count] == 0:
+                    f.write(str(test_x.col[count] + 1) + ':' + str(test_x.data[count]))    # 为什么要+1 呢 因为 假设col是5 那么他就是第六列 写进去的应该是6
+                else:
+                    f.write(str(test_x.col[count] + 1) + ':' + '1')
                 count += 1
 
             f.write(os.linesep)
-
+    print('write test.txt done')
     '''
     至此 FFM_preprocess 处理完毕
     生成了三个txt 将用于FFM脚本的使用
     '''
-
-
-#
-# ''' PreProcess '''
-preprocess('data.csv','data/')
-FFM_preprocess('data/')
+    
