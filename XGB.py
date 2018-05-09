@@ -34,7 +34,7 @@ def main():
   os.mkdir(outputpath)
 
   ''' PreProcess '''
-  preprocess.preprocess(inputfilename=raw_data_name,outputpath=inputpath)
+  # preprocess.preprocess(inputfilename=raw_data_name,outputpath=inputpath)
 
   ''' Load dataset '''
   print('Load data....')

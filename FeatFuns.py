@@ -88,20 +88,17 @@ def save_feat_list(one_hot_feature, vector_feature, outputpath='data/'):
 def split_dataset(data_x, data_y, train_size = 0.7):
 
     # shuffle
-    data_x,data_y = shuffle(data_x,data_y,random_state = 2333)  # 打乱后data_x类型变为csr(原coo)
-
-    if train_size == 1:
-        return data_x, data_y, data_x, data_y
+    data_x,data_y = shuffle(data_x,data_y,random_state = 2018)
 
     # Split
-    data_x = data_x.tocoo()     # 重新转变成coo型的稀疏矩阵，同时内部row和col属性会重新升序排列，保证后续操作可行
+    data_x = data_x.tocoo()     # 变成coo型的稀疏矩阵
     rown_data = data_x.shape[0]   # 稀疏矩阵的行数
     rown_train = int(train_size * rown_data)   # 作为训练集的行数
-    n_train = len(data_x.row[data_x.row < rown_train])   # 非零值中分到训练集中的个数
+    n_train = len(data_x.row[data_x.row < rown_train])   # row/col 中属于训练集中的元素个数
 
-    ind=np.arange(len(data_x.data))     # 生成索引列表
-    ind_train=ind[:n_train]            # 属于训练集的非零元素的索引列表
-    ind_evals=ind[n_train:]           # 属于验证集的非零元素的索引列表
+    ind=np.arange(len(data_x.data))     # 稀疏矩阵非零值个数
+    ind_train=ind[:n_train]            # 前面的是训练集的
+    ind_evals=ind[n_train:]           # 后面的是验证集的
 
     train_x = sparse.coo_matrix(
         (data_x.data[ind_train],(data_x.row[ind_train], data_x.col[ind_train])),
@@ -114,18 +111,6 @@ def split_dataset(data_x, data_y, train_size = 0.7):
     evals_y = data_y[rown_train:]
 
     return train_x,train_y,evals_x,evals_y 
-
-
-''' save model per 1000 iter '''
-def save_model(per_iter = 1000):
-    def callback(env):
-        iter = env.iteration - env.begin_iteration
-        if iter % per_iter == 0 and not iter == 0:
-            print('Save model per {0} iter...'.format(per_iter))
-            env.model.save_model('tmp/model_{0}.txt'.format(iter))
-    callback.before_iteration = True
-    callback.order = 0
-    return callback
 
 
 ''' Following are some funtions for feature calculation '''
