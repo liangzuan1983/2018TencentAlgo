@@ -85,32 +85,47 @@ def save_feat_list(one_hot_feature, vector_feature, outputpath='data/'):
 
 
 # Split dataset
-def split_dataset(data_x, data_y, train_size = 0.7):
+# def split_dataset(data_x, data_y, train_size = 0.7):
 
-    # shuffle
-    data_x,data_y = shuffle(data_x,data_y,random_state = 2018)
+#     # shuffle
+#     data_x,data_y = shuffle(data_x,data_y,random_state = 2333)
 
-    # Split
-    data_x = data_x.tocoo()     # 变成coo型的稀疏矩阵
-    rown_data = data_x.shape[0]   # 稀疏矩阵的行数
-    rown_train = int(train_size * rown_data)   # 作为训练集的行数
-    n_train = len(data_x.row[data_x.row < rown_train])   # row/col 中属于训练集中的元素个数
+#     if train_size == 1:
+#         return data_x, data_y, data_x, data_y
 
-    ind=np.arange(len(data_x.data))     # 稀疏矩阵非零值个数
-    ind_train=ind[:n_train]            # 前面的是训练集的
-    ind_evals=ind[n_train:]           # 后面的是验证集的
+#     # Split
+#     data_x = data_x.tocoo()
+#     rown_data = data_x.shape[0]
+#     rown_train = int(train_size * rown_data)
+#     n_train = len(data_x.row[data_x.row < rown_train])
 
-    train_x = sparse.coo_matrix(
-        (data_x.data[ind_train],(data_x.row[ind_train], data_x.col[ind_train])),
-        shape=(rown_train,data_x.shape[1]))
-    train_y = data_y[:rown_train]
+#     ind=np.arange(len(data_x.data))
+#     ind_train=ind[:n_train]
+#     ind_evals=ind[n_train:]
 
-    evals_x = sparse.coo_matrix(
-        (data_x.data[ind_evals],(data_x.row[ind_evals]-rown_train, data_x.col[ind_evals])),
-        shape=(rown_data-rown_train,data_x.shape[1]))
-    evals_y = data_y[rown_train:]
+#     train_x = sparse.coo_matrix(
+#         (data_x.data[ind_train],(data_x.row[ind_train], data_x.col[ind_train])),
+#         shape=(rown_train,data_x.shape[1]))
+#     train_y = data_y[:rown_train]
 
-    return train_x,train_y,evals_x,evals_y 
+#     evals_x = sparse.coo_matrix(
+#         (data_x.data[ind_evals],(data_x.row[ind_evals]-rown_train, data_x.col[ind_evals])),
+#         shape=(rown_data-rown_train,data_x.shape[1]))
+#     evals_y = data_y[rown_train:]
+
+#     return train_x,train_y,evals_x,evals_y 
+
+
+''' save model per 1000 iter '''
+def save_model(per_iter = 1000):
+    def callback(env):
+        iter = env.iteration - env.begin_iteration
+        if iter % per_iter == 0 and not iter == 0:
+            print('Save model per {0} iter...'.format(per_iter))
+            env.model.save_model('tmp/model_{0}.txt'.format(iter))
+    callback.before_iteration = True
+    callback.order = 0
+    return callback
 
 
 ''' Following are some funtions for feature calculation '''

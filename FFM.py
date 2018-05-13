@@ -27,11 +27,11 @@ else:
 # param:
 parameter = {
     'task':'binary', 
-    'lr':0.2,
+    'lr':0.1,
     'lambda':0.002, 
     'metric':'auc',
-    'epoch': 500,
-    'stop_window': 10
+    'epoch': 10,
+    'stop_window': 5
     }
 
 def main():
@@ -53,19 +53,21 @@ def main():
     if preprocessflag == 'on':
         preprocess.preprocess(inputfilename=raw_data_name,outputpath=inputpath)
     if FFM_preprocessflag == 'on':
-        preprocess.FFM_preprocess(inputpath)
+        # preprocess.FFM_preprocess(inputpath)
+        preprocess.convertion(inputpath)
 
     ''' training '''
     ffm_model = xl.create_ffm()
     ffm_model.setTrain(inputpath+'train.txt')
     ffm_model.setValidate(inputpath+'evals.txt')
     ffm_model.fit(parameter, outputpath+'model.out')
+    # ffm_model.cv(parameter)
     ffm_model.setTest(inputpath+'test.txt')
 
     ffm_model.setSigmoid()
     ffm_model.predict(outputpath+'model.out',outputpath+'res.txt')
 
-    ''' turn txt to final result '''
+     turn txt to final result 
     print('turn txt to final result')
     res = pd.read_csv(inputpath + 'res.csv')
 
